@@ -1,0 +1,412 @@
+import { useEffect, useState } from "react";
+import api from "../../services/api";
+
+function ReservasColaborador() {
+  const [reservas, setReservas] = useState([]);
+  const [mensaje, setMensaje] = useState("");
+  const [cargando, setCargando] = useState(true);
+
+  const [filtroEstado, setFiltroEstado] = useState("ACTIVA");
+  const [busquedaRut, setBusquedaRut] = useState("");
+
+  const [confirmando, setConfirmando] = useState(false);
+  const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
+
+  const cargarReservas = async () => {
+    try {
+      setCargando(true);
+      setMensaje("");
+
+      const respuesta = await api.get("/reservas/", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+
+      setReservas(respuesta.data);
+    } catch (error) {
+      console.error("Error al cargar reservas:", error);
+
+      if (error.response) {
+        setMensaje(
+          error.response.data.mensaje || "No se pudieron cargar las reservas.",
+        );
+      } else {
+        setMensaje("No se pudo conectar con el servidor.");
+      }
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarReservas();
+  }, []);
+
+  const abrirConfirmacion = (reserva) => {
+    setReservaSeleccionada(reserva);
+    setConfirmando(true);
+    setMensaje("");
+  };
+
+  const cancelarConfirmacion = () => {
+    setReservaSeleccionada(null);
+    setConfirmando(false);
+    setMensaje("");
+  };
+
+  const confirmarUtilizacion = async () => {
+    if (!reservaSeleccionada) {
+      return;
+    }
+
+    try {
+      setMensaje("");
+
+      const respuesta = await api.post(
+        `/reservas/${reservaSeleccionada.id_reserva}/utilizar/`,
+      );
+
+      if (respuesta.data.estado) {
+        setConfirmando(false);
+        setReservaSeleccionada(null);
+
+        await cargarReservas();
+      } else {
+        setMensaje(
+          respuesta.data.mensaje ||
+            "No se pudo marcar la reserva como utilizada.",
+        );
+      }
+    } catch (error) {
+      console.error("Error al marcar reserva como utilizada:", error);
+
+      if (error.response) {
+        setMensaje(
+          error.response.data.mensaje ||
+            "No se pudo marcar la reserva como utilizada.",
+        );
+      } else {
+        setMensaje("No se pudo conectar con el servidor.");
+      }
+    }
+  };
+
+  const formatearFecha = (fecha) => {
+    if (!fecha) {
+      return "";
+    }
+
+    const fechaTexto = String(fecha);
+
+    if (fechaTexto.includes("T")) {
+      return fechaTexto.split("T")[0].split("-").reverse().join("/");
+    }
+
+    if (fechaTexto.includes("-")) {
+      return fechaTexto.split("-").reverse().join("/");
+    }
+
+    return fechaTexto;
+  };
+
+  const formatearEstado = (estado) => {
+    if (!estado) {
+      return "";
+    }
+
+    return estado.charAt(0).toUpperCase() + estado.slice(1).toLowerCase();
+  };
+
+  const reservaActiva = (estado) => {
+    return estado?.toUpperCase() === "ACTIVA";
+  };
+
+  const contarPorEstado = (estado) => {
+    return reservas.filter(
+      (reserva) => reserva.estado_reserva?.toUpperCase() === estado,
+    ).length;
+  };
+
+  const reservasFiltradas = reservas.filter((reserva) => {
+    const estado = reserva.estado_reserva?.toUpperCase() || "";
+
+    const coincideEstado = filtroEstado === "TODAS" || estado === filtroEstado;
+
+    const rut = String(reserva.rut_usuario || "").toLowerCase();
+    const busqueda = busquedaRut.trim().toLowerCase();
+
+    const coincideRut = busqueda === "" || rut.includes(busqueda);
+
+    return coincideEstado && coincideRut;
+  });
+
+  if (confirmando && reservaSeleccionada) {
+    return (
+      <div className="disponibilidad">
+        <section className="confirmacion">
+          <div className="confirmacion-card">
+            <p className="seccion-etiqueta">Confirmación</p>
+
+            <h1>Marcar reserva como utilizada</h1>
+
+            <p className="confirmacion-descripcion">
+              Revisa los datos antes de confirmar que esta reserva fue
+              utilizada.
+            </p>
+
+            <div className="confirmacion-datos">
+              <div>
+                <span>Cliente</span>
+                <strong>{reservaSeleccionada.rut_usuario}</strong>
+              </div>
+
+              <div>
+                <span>Cancha</span>
+                <strong>{reservaSeleccionada.nombre_cancha}</strong>
+              </div>
+
+              <div>
+                <span>Tipo</span>
+                <strong>{reservaSeleccionada.tipo_cancha}</strong>
+              </div>
+
+              <div>
+                <span>Fecha</span>
+                <strong>
+                  {formatearFecha(reservaSeleccionada.fecha_reserva)}
+                </strong>
+              </div>
+
+              <div>
+                <span>Horario</span>
+                <strong>
+                  {reservaSeleccionada.hora_inicio} -{" "}
+                  {reservaSeleccionada.hora_fin}
+                </strong>
+              </div>
+
+              <div>
+                <span>Valor total</span>
+                <strong>
+                  $
+                  {Number(reservaSeleccionada.valor_total).toLocaleString(
+                    "es-CL",
+                  )}
+                </strong>
+              </div>
+            </div>
+
+            <div className="confirmacion-total">
+              <span>Estado actual</span>
+
+              <strong>
+                {formatearEstado(reservaSeleccionada.estado_reserva)}
+              </strong>
+            </div>
+
+            {mensaje && <div className="mensaje-disponibilidad">{mensaje}</div>}
+
+            <div className="confirmacion-acciones">
+              <button className="boton-volver" onClick={cancelarConfirmacion}>
+                Volver
+              </button>
+
+              <button
+                className="boton-confirmar"
+                onClick={confirmarUtilizacion}
+              >
+                Confirmar utilización
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="disponibilidad">
+      <section className="disponibilidad-encabezado">
+        <p className="seccion-etiqueta">Gestión de reservas</p>
+
+        <h1>Reservas</h1>
+
+        <p>
+          Consulta las reservas de los clientes y registra aquellas que ya
+          fueron utilizadas.
+        </p>
+      </section>
+
+      {mensaje && <div className="mensaje-disponibilidad">{mensaje}</div>}
+
+      <section className="busqueda-card">
+        <h2>Filtrar reservas</h2>
+
+        <div className="filtros-reservas">
+          <button
+            className={
+              filtroEstado === "ACTIVA"
+                ? "filtro-reserva filtro-activo"
+                : "filtro-reserva"
+            }
+            onClick={() => setFiltroEstado("ACTIVA")}
+          >
+            <span>Activas</span>
+            <strong>{contarPorEstado("ACTIVA")}</strong>
+          </button>
+
+          <button
+            className={
+              filtroEstado === "UTILIZADA"
+                ? "filtro-reserva filtro-activo"
+                : "filtro-reserva"
+            }
+            onClick={() => setFiltroEstado("UTILIZADA")}
+          >
+            <span>Utilizadas</span>
+            <strong>{contarPorEstado("UTILIZADA")}</strong>
+          </button>
+
+          <button
+            className={
+              filtroEstado === "CANCELADA"
+                ? "filtro-reserva filtro-activo"
+                : "filtro-reserva"
+            }
+            onClick={() => setFiltroEstado("CANCELADA")}
+          >
+            <span>Canceladas</span>
+            <strong>{contarPorEstado("CANCELADA")}</strong>
+          </button>
+
+          <button
+            className={
+              filtroEstado === "TODAS"
+                ? "filtro-reserva filtro-activo"
+                : "filtro-reserva"
+            }
+            onClick={() => setFiltroEstado("TODAS")}
+          >
+            <span>Todas</span>
+            <strong>{reservas.length}</strong>
+          </button>
+        </div>
+
+        <div className="busqueda-rut">
+          <label htmlFor="buscar-rut">Buscar por RUT</label>
+
+          <input
+            id="buscar-rut"
+            type="text"
+            placeholder="Ej: 55.555.555-5"
+            value={busquedaRut}
+            onChange={(e) => setBusquedaRut(e.target.value)}
+          />
+        </div>
+      </section>
+
+      {cargando ? (
+        <div className="busqueda-card">
+          <p>Cargando reservas...</p>
+        </div>
+      ) : reservasFiltradas.length === 0 ? (
+        <div className="busqueda-card">
+          <h2>No hay reservas</h2>
+
+          <p>
+            No existen reservas que coincidan con los filtros seleccionados.
+          </p>
+        </div>
+      ) : (
+        <section className="resultados-disponibilidad">
+          <div className="resultados-titulo">
+            <div>
+              <p className="seccion-etiqueta">Listado</p>
+
+              <h2>
+                {filtroEstado === "ACTIVA"
+                  ? "Reservas activas"
+                  : filtroEstado === "UTILIZADA"
+                    ? "Reservas utilizadas"
+                    : filtroEstado === "CANCELADA"
+                      ? "Reservas canceladas"
+                      : "Todas las reservas"}
+              </h2>
+            </div>
+
+            <span className="fecha-resultados">
+              {reservasFiltradas.length}{" "}
+              {reservasFiltradas.length === 1 ? "reserva" : "reservas"}
+            </span>
+          </div>
+
+          <div className="canchas-lista">
+            {reservasFiltradas.map((reserva) => (
+              <div className="cancha-card" key={reserva.id_reserva}>
+                <div className="cancha-info">
+                  <div>
+                    <h3>Reserva #{reserva.id_reserva}</h3>
+
+                    <p>
+                      {reserva.nombre_cancha} · {reserva.tipo_cancha}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="confirmacion-datos">
+                  <div>
+                    <span>Cliente</span>
+                    <strong>{reserva.rut_usuario}</strong>
+                  </div>
+
+                  <div>
+                    <span>Fecha</span>
+                    <strong>{formatearFecha(reserva.fecha_reserva)}</strong>
+                  </div>
+
+                  <div>
+                    <span>Horario</span>
+                    <strong>
+                      {reserva.hora_inicio} - {reserva.hora_fin}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Valor total</span>
+                    <strong>
+                      ${Number(reserva.valor_total).toLocaleString("es-CL")}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Estado</span>
+                    <strong>{formatearEstado(reserva.estado_reserva)}</strong>
+                  </div>
+
+                  <div>
+                    <span>Cancha</span>
+                    <strong>{reserva.nombre_cancha}</strong>
+                  </div>
+                </div>
+
+                {reservaActiva(reserva.estado_reserva) && (
+                  <div className="confirmacion-acciones">
+                    <button
+                      className="boton-confirmar"
+                      onClick={() => abrirConfirmacion(reserva)}
+                    >
+                      Marcar como utilizada
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+export default ReservasColaborador;
