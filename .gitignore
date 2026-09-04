@@ -1,0 +1,25 @@
+# Variables de entorno y entornos locales
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+
+# Python y Django
+__pycache__/
+*.py[cod]
+*.pyo
+*.log
+db.sqlite3
+
+# Node y Vite
+node_modules/
+dist/
+build/
+
+# Sistema e IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

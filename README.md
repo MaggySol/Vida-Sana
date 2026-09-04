@@ -8,7 +8,7 @@ Aplicación web para administrar la reserva de canchas deportivas. Permite a los
 - Consulta de canchas y bloques horarios disponibles.
 - Creación y cancelación de reservas para clientes.
 - Confirmación de uso y registro de inasistencias por colaboradores o administradores.
-- Administración de canchas y consulta global de reservas para administradores.
+- Administración de canchas, reservas y usuarios para administradores.
 - Registro de penalizaciones y auditoría de cambios en canchas.
 
 ## Tecnologías
@@ -31,8 +31,8 @@ Vida-Sana/
 
 ## Requisitos
 
-- Node.js 20 o superior y npm.
-- Python 3.11 o superior.
+- Node.js 20.19 o superior y npm.
+- Python 3.12 o superior.
 - Una instancia accesible de Oracle Database.
 
 ## Configuración de la base de datos
@@ -68,7 +68,7 @@ Desde la carpeta `backend`, crea y activa un entorno virtual, instala las depend
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install django djangorestframework djangorestframework-simplejwt django-cors-headers oracledb python-dotenv
+pip install -r requirements.txt
 ```
 
 Crea un archivo `backend/.env` con los valores de tu instancia:
@@ -77,6 +77,12 @@ Crea un archivo `backend/.env` con los valores de tu instancia:
 ORACLE_USER=tu_usuario
 ORACLE_PASSWORD=tu_contrasena
 ORACLE_DSN=host:puerto/servicio
+```
+
+El archivo de ejemplo [`backend/.env.example`](backend/.env.example) contiene las mismas variables sin credenciales. Verifica la configuración de Django antes de iniciar la API:
+
+```powershell
+python manage.py check
 ```
 
 Inicia la API:
@@ -111,7 +117,19 @@ npm run build
 | --- | --- |
 | Cliente | Registrarse, consultar disponibilidad, crear y cancelar sus reservas, y revisar sus penalizaciones. |
 | Colaborador | Consultar reservas y disponibilidad; confirmar uso o marcar inasistencias. |
-| Administrador | Gestionar canchas, consultar y cancelar reservas, revisar disponibilidad y penalizaciones. |
+| Administrador | Gestionar canchas, reservas y usuarios; consultar disponibilidad y penalizaciones; confirmar uso o marcar inasistencias. |
+
+### Gestión de usuarios administrativa
+
+Los administradores pueden consultar los usuarios registrados y crear cuentas con los roles `cliente`, `colaborador` o `administrador`. Estas acciones están protegidas tanto en el frontend como en la API mediante JWT y el permiso de administrador.
+
+El registro público disponible desde la pantalla de inicio de sesión se mantiene separado: siempre crea cuentas con el rol `cliente` y no permite elegir otro rol.
+
+Actualmente la edición de usuarios no está disponible, ya que `PACK_USUARIOS` no incluye un procedimiento de actualización.
+
+### Inasistencias y penalizaciones
+
+Un colaborador o administrador puede marcar una reserva activa como inasistencia. El procedimiento `PACK_RESERVAS.MARCAR_INASISTENCIA` exige que hayan transcurrido al menos 30 minutos desde la hora de inicio; al completarse, cambia el estado de la reserva a `inasistencia` y registra una penalización asociada al cliente.
 
 ## Endpoints principales
 
@@ -124,6 +142,9 @@ Las rutas se encuentran bajo el prefijo `/api/`:
 | Disponibilidad | `GET /disponibilidad/?fecha=DD/MM/YYYY&tipo={tipo}` |
 | Reservas | `GET /reservas/`, `POST /reservas/crear/`, `POST /reservas/{id}/cancelar/` |
 | Operación de reservas | `POST /reservas/{id}/utilizar/`, `POST /reservas/{id}/inasistencia/` |
+| Usuarios administrativos | `GET /admin/usuarios/`, `POST /admin/usuarios/crear/` |
 | Penalizaciones | `GET /penalizaciones/` |
 
 Las rutas protegidas requieren el encabezado `Authorization: Bearer <access_token>` obtenido al iniciar sesión.
+
+Las rutas de usuarios administrativos requieren además que el token pertenezca a un usuario con rol `administrador`. La ruta de inasistencia admite los roles `colaborador` y `administrador`.
