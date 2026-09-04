@@ -656,7 +656,6 @@ def cancelar_reserva(request, id_reserva):
         conexion = get_connection()
 
         with conexion.cursor() as cursor:
-
             # El cliente solamente puede cancelar sus propias reservas.
             if rol == "cliente":
                 cursor.execute("""
@@ -682,7 +681,6 @@ def cancelar_reserva(request, id_reserva):
                     }, status=403)
 
             # El administrador puede cancelar cualquier reserva.
-
             v_estado = cursor.var(str)
             v_mensaje = cursor.var(str)
 
@@ -825,10 +823,9 @@ def login(request):
 
     return Response(resultado)
 
-# Registro para usuarios nuevos desde el login
 @api_view(["POST"])
 def registro_usuario(request):
-
+    # Registro para usuarios nuevos desde el login
     rut = request.data.get("rut")
     nombre = request.data.get("nombre")
     apellido_paterno = request.data.get("apellido_paterno")
@@ -896,6 +893,109 @@ def registro_usuario(request):
         resultado,
         status=201
     )
+
+
+#********************************
+# Endpoints administrativos de usuarios
+#********************************
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, EsAdministrador])
+def listar_usuarios_administracion(request):
+    # Devuelve los usuarios sin exponer datos sensibles como contraseñas.
+    conexion = None
+
+    try:
+        conexion = get_connection()
+
+        with conexion.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    RUT,
+                    NOMBRE,
+                    APELLIDO_PATERNO,
+                    APELLIDO_MATERNO,
+                    EMAIL,
+                    TELEFONO,
+                    ROL,
+                    ESTADO_USUARIO,
+                    FECHA_REGISTRO
+                FROM USUARIOS
+                ORDER BY FECHA_REGISTRO DESC, RUT
+            """)
+
+            columnas = [columna[0].lower() for columna in cursor.description]
+            usuarios = [dict(zip(columnas, fila)) for fila in cursor.fetchall()]
+
+        return Response(usuarios)
+
+    except Exception as e:
+        return Response({
+            "estado": False,
+            "mensaje": str(e)
+        }, status=500)
+
+    finally:
+        if conexion:
+            conexion.close()
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, EsAdministrador])
+def crear_usuario_administracion(request):
+    # Crea un usuario con el rol elegido por un administrador autenticado.
+    rut = request.data.get("rut")
+    nombre = request.data.get("nombre")
+    apellido_paterno = request.data.get("apellido_paterno")
+    apellido_materno = request.data.get("apellido_materno")
+    email = request.data.get("email")
+    contrasenia = request.data.get("contrasenia")
+    telefono = request.data.get("telefono")
+    rol = request.data.get("rol")
+
+    campos_obligatorios = {
+        "RUT": rut,
+        "nombre": nombre,
+        "apellido paterno": apellido_paterno,
+        "apellido materno": apellido_materno,
+        "email": email,
+        "contraseña": contrasenia,
+        "rol": rol,
+    }
+
+    for campo, valor in campos_obligatorios.items():
+        if not isinstance(valor, str) or not valor.strip():
+            return Response({
+                "estado": False,
+                "mensaje": (
+                    f"{'La' if campo in ['contraseña'] else 'El'} "
+                    f"{campo} es obligatorio."
+                )
+            }, status=400)
+
+    rol = rol.strip().lower()
+    if rol not in ["cliente", "colaborador", "administrador"]:
+        return Response({
+            "estado": False,
+            "mensaje": 'El rol no es válido. Debe ser "cliente", "colaborador" o "administrador".'
+        }, status=400)
+
+    resultado = registrar_usuario(
+        rut.strip(),
+        nombre.strip(),
+        apellido_paterno.strip(),
+        apellido_materno.strip(),
+        email.strip(),
+        contrasenia,
+        telefono.strip() if isinstance(telefono, str) else telefono,
+        rol,
+    )
+
+    if not resultado["estado"]:
+        mensaje = resultado.get("mensaje", "No se pudo crear el usuario.")
+        estado_http = 409 if "ya está registrado" in mensaje.lower() else 400
+        return Response(resultado, status=estado_http)
+
+    return Response(resultado, status=201)
 
 
 #********************************
@@ -975,4 +1075,4 @@ def listar_penalizaciones(request):
 
     finally:
         if conexion:
-            conexion.close()      
+            conexion.close()

@@ -11,11 +11,16 @@ function GestionReservas() {
 
   const [confirmando, setConfirmando] = useState(false);
   const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
+  const [accionSeleccionada, setAccionSeleccionada] = useState(null);
+  const [mensajeEsExito, setMensajeEsExito] = useState(false);
 
-  const cargarReservas = async () => {
+  const cargarReservas = async (limpiarMensaje = true) => {
     try {
       setCargando(true);
-      setMensaje("");
+      if (limpiarMensaje) {
+        setMensaje("");
+        setMensajeEsExito(false);
+      }
 
       const respuesta = await api.get("/reservas/");
 
@@ -39,48 +44,60 @@ function GestionReservas() {
     cargarReservas();
   }, []);
 
-  const abrirConfirmacion = (reserva) => {
+  const abrirConfirmacion = (reserva, accion) => {
     setReservaSeleccionada(reserva);
+    setAccionSeleccionada(accion);
     setConfirmando(true);
     setMensaje("");
+    setMensajeEsExito(false);
   };
 
   const cancelarConfirmacion = () => {
     setReservaSeleccionada(null);
+    setAccionSeleccionada(null);
     setConfirmando(false);
     setMensaje("");
+    setMensajeEsExito(false);
   };
 
-  const confirmarUtilizacion = async () => {
-    if (!reservaSeleccionada) {
+  const confirmarAccion = async () => {
+    if (!reservaSeleccionada || !accionSeleccionada) {
       return;
     }
 
+    const esInasistencia = accionSeleccionada === "inasistencia";
+    const endpoint = esInasistencia ? "inasistencia" : "utilizar";
+    const accion = esInasistencia ? "inasistencia" : "utilizada";
+
     try {
       setMensaje("");
+      setMensajeEsExito(false);
 
       const respuesta = await api.post(
-        `/reservas/${reservaSeleccionada.id_reserva}/utilizar/`,
+        `/reservas/${reservaSeleccionada.id_reserva}/${endpoint}/`,
       );
 
       if (respuesta.data.estado) {
         setConfirmando(false);
         setReservaSeleccionada(null);
+        setAccionSeleccionada(null);
 
-        await cargarReservas();
+        await cargarReservas(false);
+        setMensaje(respuesta.data.mensaje || `Reserva marcada como ${accion}.`);
+        setMensajeEsExito(true);
       } else {
         setMensaje(
           respuesta.data.mensaje ||
-            "No se pudo marcar la reserva como utilizada.",
+            `No se pudo marcar la reserva como ${accion}.`,
         );
       }
     } catch (error) {
-      console.error("Error al marcar reserva como utilizada:", error);
+      console.error(`Error al marcar reserva como ${accion}:`, error);
 
       if (error.response) {
         setMensaje(
           error.response.data.mensaje ||
-            "No se pudo marcar la reserva como utilizada.",
+            `No se pudo marcar la reserva como ${accion}.`,
         );
       } else {
         setMensaje("No se pudo conectar con el servidor.");
@@ -142,17 +159,20 @@ function GestionReservas() {
    * Pantalla de confirmación
    */
   if (confirmando && reservaSeleccionada) {
+    const esInasistencia = accionSeleccionada === "inasistencia";
+    const accion = esInasistencia ? "inasistencia" : "utilizada";
+
     return (
       <div className="disponibilidad">
         <section className="confirmacion">
           <div className="confirmacion-card">
             <p className="seccion-etiqueta">Confirmación</p>
 
-            <h1>Marcar reserva como utilizada</h1>
+            <h1>Marcar reserva como {accion}</h1>
 
             <p className="confirmacion-descripcion">
-              Revisa los datos antes de confirmar que esta reserva fue
-              utilizada.
+              Revisa los datos antes de confirmar que esta reserva fue marcada
+              como {accion}.
             </p>
 
             <div className="confirmacion-datos">
@@ -205,7 +225,17 @@ function GestionReservas() {
               </strong>
             </div>
 
-            {mensaje && <div className="mensaje-disponibilidad">{mensaje}</div>}
+            {mensaje && (
+              <div
+                className={
+                  mensajeEsExito
+                    ? "mensaje-disponibilidad mensaje-exito"
+                    : "mensaje-disponibilidad"
+                }
+              >
+                {mensaje}
+              </div>
+            )}
 
             <div className="confirmacion-acciones">
               <button className="boton-volver" onClick={cancelarConfirmacion}>
@@ -213,10 +243,14 @@ function GestionReservas() {
               </button>
 
               <button
-                className="boton-confirmar"
-                onClick={confirmarUtilizacion}
+                className={
+                  esInasistencia
+                    ? "boton-confirmar boton-inasistencia"
+                    : "boton-confirmar"
+                }
+                onClick={confirmarAccion}
               >
-                Confirmar utilización
+                Confirmar {accion}
               </button>
             </div>
           </div>
@@ -282,6 +316,18 @@ function GestionReservas() {
 
           <button
             className={
+              filtroEstado === "INASISTENCIA"
+                ? "filtro-reserva filtro-activo"
+                : "filtro-reserva"
+            }
+            onClick={() => setFiltroEstado("INASISTENCIA")}
+          >
+            <span>Inasistencias</span>
+            <strong>{contarPorEstado("INASISTENCIA")}</strong>
+          </button>
+
+          <button
+            className={
               filtroEstado === "TODAS"
                 ? "filtro-reserva filtro-activo"
                 : "filtro-reserva"
@@ -331,6 +377,8 @@ function GestionReservas() {
                     ? "Reservas utilizadas"
                     : filtroEstado === "CANCELADA"
                       ? "Reservas canceladas"
+                      : filtroEstado === "INASISTENCIA"
+                        ? "Reservas con inasistencia"
                       : "Todas las reservas"}
               </h2>
             </div>
@@ -381,7 +429,11 @@ function GestionReservas() {
 
                   <div>
                     <span>Estado</span>
-                    <strong>{formatearEstado(reserva.estado_reserva)}</strong>
+                    <strong
+                      className={`estado-reserva estado-${reserva.estado_reserva?.toLowerCase()}`}
+                    >
+                      {formatearEstado(reserva.estado_reserva)}
+                    </strong>
                   </div>
 
                   <div>
@@ -394,9 +446,16 @@ function GestionReservas() {
                   <div className="confirmacion-acciones">
                     <button
                       className="boton-confirmar"
-                      onClick={() => abrirConfirmacion(reserva)}
+                      onClick={() => abrirConfirmacion(reserva, "utilizar")}
                     >
-                      Marcar como utilizada
+                      ✓ Marcar como utilizada
+                    </button>
+
+                    <button
+                      className="boton-confirmar boton-inasistencia"
+                      onClick={() => abrirConfirmacion(reserva, "inasistencia")}
+                    >
+                      ✕ Marcar inasistencia
                     </button>
                   </div>
                 )}

@@ -12,7 +12,9 @@ from .views import (
     marcar_inasistencia,
     login,
     registro_usuario,
-    listar_penalizaciones
+    listar_penalizaciones,
+    listar_usuarios_administracion,
+    crear_usuario_administracion,
 )
 
 urlpatterns = [
@@ -33,6 +35,8 @@ urlpatterns = [
     # Usuarios
     path("auth/login/", login, name="login"),
     path("auth/registro/", registro_usuario, name="registro-usuario"),
+    path("admin/usuarios/", listar_usuarios_administracion, name="listar-usuarios-administracion"),
+    path("admin/usuarios/crear/", crear_usuario_administracion, name="crear-usuario-administracion"),
 
     # Penalizaciones
     path("penalizaciones/", listar_penalizaciones, name="listar-penalizaciones"),

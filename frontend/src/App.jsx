@@ -12,6 +12,7 @@ import Registro from "./pages/Registro";
 import GestionCanchas from "./pages/administrador/GestionCanchas";
 import GestionReservas from "./pages/administrador/GestionReservas";
 import DisponibilidadAdministrador from "./pages/administrador/DisponibilidadAdministrador";
+import GestionUsuariosAdministrador from "./pages/administrador/GestionUsuariosAdministrador";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
@@ -129,6 +130,16 @@ function App() {
             <ProtectedRoute roles={["administrador"]}>
               <Layout>
                 <DisponibilidadAdministrador />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/administrador/usuarios"
+          element={
+            <ProtectedRoute roles={["administrador"]}>
+              <Layout>
+                <GestionUsuariosAdministrador />
               </Layout>
             </ProtectedRoute>
           }

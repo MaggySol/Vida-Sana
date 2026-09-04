@@ -80,6 +80,14 @@ function MisReservas() {
       return "estado-reserva estado-cancelada";
     }
 
+    if (estadoNormalizado === "utilizada") {
+      return "estado-reserva estado-utilizada";
+    }
+
+    if (estadoNormalizado === "inasistencia") {
+      return "estado-reserva estado-inasistencia";
+    }
+
     return "estado-reserva";
   };
 
