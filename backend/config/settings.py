@@ -147,5 +147,5 @@ SIMPLE_JWT = {
 # Permitir conexión con frontend
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://r48tkd13-5173.brs.devtunnels.ms/",
+    "https://r48tkd13-5173.brs.devtunnels.ms",
 ]
