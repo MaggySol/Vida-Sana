@@ -47,7 +47,6 @@ function DisponibilidadAdministrador() {
         );
       }
     } catch (error) {
-      console.error("Error al consultar disponibilidad:", error);
 
       if (error.response) {
         setMensaje(

@@ -31,7 +31,6 @@ function GestionUsuariosAdministrador() {
       const respuesta = await api.get("/admin/usuarios/");
       setUsuarios(respuesta.data);
     } catch (errorRespuesta) {
-      console.error("Error al cargar usuarios:", errorRespuesta);
       setError(
         errorRespuesta.response?.data?.mensaje ||
           "No se pudieron cargar los usuarios.",
@@ -122,7 +121,6 @@ function GestionUsuariosAdministrador() {
       setMensaje(respuesta.data.mensaje || "Usuario creado correctamente.");
       await cargarUsuarios();
     } catch (errorRespuesta) {
-      console.error("Error al crear usuario:", errorRespuesta);
       setError(
         errorRespuesta.response?.data?.mensaje ||
           "No se pudo crear el usuario.",

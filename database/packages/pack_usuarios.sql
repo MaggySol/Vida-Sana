@@ -238,7 +238,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_USUARIOS AS
                     'Falta un campo obligatorio.';
             ELSE
                 V_MENSAJE :=
-                    'Se produjo un error inesperado: ' || SQLERRM;
+                    'No se pudo completar la operación. Inténtelo más tarde.';
             END IF;
 
     END INGRESAR_USUARIO;

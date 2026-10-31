@@ -200,7 +200,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_RESERVAS AS
         WHEN OTHERS THEN
             ROLLBACK;
             V_ESTADO := 'FALSE';
-            V_MENSAJE := 'Error inesperado: ' || SQLERRM;
+            V_MENSAJE := 'No se pudo completar la operación. Inténtelo más tarde.';
 
     END INGRESAR_RESERVA;
 
@@ -268,7 +268,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_RESERVAS AS
         WHEN OTHERS THEN
             ROLLBACK;
             V_ESTADO := 'FALSE';
-            V_MENSAJE := 'Error inesperado: ' || SQLERRM;
+            V_MENSAJE := 'No se pudo completar la operación. Inténtelo más tarde.';
 
     END CANCELAR_RESERVA;
 
@@ -312,7 +312,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_RESERVAS AS
         WHEN OTHERS THEN
             ROLLBACK;
             V_ESTADO := 'FALSE';
-            V_MENSAJE := 'Error inesperado: ' || SQLERRM;
+            V_MENSAJE := 'No se pudo completar la operación. Inténtelo más tarde.';
 
     END CONFIRMAR_RESERVA_UTILIZADA;
 
@@ -395,7 +395,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_RESERVAS AS
         WHEN OTHERS THEN
             ROLLBACK;
             V_ESTADO := 'FALSE';
-            V_MENSAJE := 'Error inesperado: ' || SQLERRM;
+            V_MENSAJE := 'No se pudo completar la operación. Inténtelo más tarde.';
     END MARCAR_INASISTENCIA;
 
 END PACK_RESERVAS;

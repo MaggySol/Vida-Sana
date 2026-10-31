@@ -30,7 +30,6 @@ function ReservasColaborador() {
 
       setReservas(respuesta.data);
     } catch (error) {
-      console.error("Error al cargar reservas:", error);
 
       if (error.response) {
         setMensaje(
@@ -96,7 +95,6 @@ function ReservasColaborador() {
         );
       }
     } catch (error) {
-      console.error(`Error al marcar reserva como ${accion}:`, error);
 
       if (error.response) {
         setMensaje(

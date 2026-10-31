@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from rest_framework.decorators import api_view, permission_classes
@@ -8,6 +9,8 @@ from .permissions import (EsUsuarioValido, EsAdministrador, EsCliente, EsColabor
 
 from .auth import autenticar_usuario, registrar_usuario
 from .oracle.connection import get_connection
+
+logger = logging.getLogger(__name__)
 
 #********************************
 # Endpoints de canchas
@@ -44,10 +47,11 @@ def listar_canchas(request):
 
         return Response(canchas)
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -216,11 +220,12 @@ def ingresar_cancha(request):
             status=400
         )
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response(
             {
                 "estado": False,
-                "mensaje": str(e)
+                "mensaje": "No se pudo completar la solicitud."
             },
             status=500
         )
@@ -289,10 +294,11 @@ def modificar_cancha(request, id_cancha):
             "mensaje": mensaje
         })
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -340,10 +346,11 @@ def eliminar_cancha(request, id_cancha):
             "mensaje": mensaje
         })
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -437,10 +444,11 @@ def listar_disponibilidad(request):
 
         return Response(disponibilidad)
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -530,10 +538,11 @@ def listar_reservas(request):
 
         return Response(reservas)
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -619,10 +628,11 @@ def ingresar_reserva(request):
             "mensaje": "La fecha debe tener el formato DD/MM/YYYY."
         }, status=400)
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -702,10 +712,11 @@ def cancelar_reserva(request, id_reserva):
             "mensaje": mensaje
         })
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
         "estado": False,
-        "mensaje": str(e)
+        "mensaje": "No se pudo completar la solicitud."
     }, status=500)
 
     finally:
@@ -741,10 +752,11 @@ def confirmar_reserva_utilizada(request, id_reserva):
             "mensaje": mensaje
         })
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -781,10 +793,11 @@ def marcar_inasistencia(request, id_reserva):
             "mensaje": mensaje
         })
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -816,9 +829,10 @@ def login(request):
     resultado = autenticar_usuario(email, contrasenia)
 
     if not resultado["estado"]:
+        status = 503 if resultado.pop("_error_servidor", False) else 401
         return Response(
             resultado,
-            status=401
+            status=status
         )
 
     return Response(resultado)
@@ -884,9 +898,10 @@ def registro_usuario(request):
     )
 
     if not resultado["estado"]:
+        status = 503 if resultado.pop("_error_servidor", False) else 400
         return Response(
             resultado,
-            status=400
+            status=status
         )
 
     return Response(
@@ -928,10 +943,11 @@ def listar_usuarios_administracion(request):
 
         return Response(usuarios)
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:
@@ -1067,10 +1083,11 @@ def listar_penalizaciones(request):
 
         return Response(penalizaciones)
 
-    except Exception as e:
+    except Exception:
+        logger.exception("Fallo al procesar una operación de la API.")
         return Response({
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar la solicitud."
         }, status=500)
 
     finally:

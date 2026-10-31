@@ -36,8 +36,6 @@ function Registro() {
         telefono,
       });
 
-      console.log("Respuesta del registro:", respuesta.data);
-
       if (respuesta.data.estado) {
         setRegistroExitoso(true);
 
@@ -52,7 +50,6 @@ function Registro() {
         setMensaje(respuesta.data.mensaje || "No se pudo crear la cuenta.");
       }
     } catch (error) {
-      console.error("Error en registro:", error);
 
       if (error.response) {
         setMensaje(

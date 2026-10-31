@@ -62,7 +62,7 @@ END;
 
 ## Configuración del backend
 
-Desde la carpeta `backend`, crea y activa un entorno virtual, instala las dependencias y configura las credenciales de Oracle:
+Desde la carpeta `backend`, crea y activa un entorno virtual, instala las dependencias y configura las credenciales de Oracle y Django:
 
 ```powershell
 cd backend
@@ -71,18 +71,43 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Crea un archivo `backend/.env` con los valores de tu instancia:
+Copia `backend/.env.example` a `backend/.env` y completa los valores de tu instancia. Genera una clave nueva para cada entorno; no reutilices una clave publicada ni la agregues al repositorio:
 
 ```env
+DJANGO_SECRET_KEY=clave-aleatoria-unica
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,r48tkd13-8000.brs.devtunnels.ms
+CORS_ALLOWED_ORIGINS=http://localhost:5173,https://r48tkd13-5173.brs.devtunnels.ms
+CSRF_TRUSTED_ORIGINS=https://r48tkd13-5173.brs.devtunnels.ms
+DJANGO_SECURE_SSL_REDIRECT=False
+DJANGO_TRUST_X_FORWARDED_PROTO=False
+DJANGO_SECURE_HSTS_SECONDS=31536000
+DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+
 ORACLE_USER=tu_usuario
 ORACLE_PASSWORD=tu_contrasena
 ORACLE_DSN=host:puerto/servicio
 ```
 
-El archivo de ejemplo [`backend/.env.example`](backend/.env.example) contiene las mismas variables sin credenciales. Verifica la configuración de Django antes de iniciar la API:
+Puedes generar `DJANGO_SECRET_KEY` con:
+
+```powershell
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+El archivo [`backend/.env.example`](backend/.env.example) contiene nombres y valores de referencia, nunca credenciales reales. Para desarrollo local, configura `DJANGO_DEBUG=True`; mantén `DJANGO_DEBUG=False` en el entorno público. `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS` y `CSRF_TRUSTED_ORIGINS` aceptan listas separadas por comas y deben contener solo los dominios usados por ese entorno.
+
+El túnel de Dev Tunnels termina TLS y redirige las conexiones externas a HTTPS, por lo que `DJANGO_SECURE_SSL_REDIRECT=False` evita redirecciones internas incorrectas. Para otro proxy de producción, activa `DJANGO_TRUST_X_FORWARDED_PROTO=True` y `DJANGO_SECURE_SSL_REDIRECT=True` únicamente si ese proxy elimina el encabezado entrante y establece `X-Forwarded-Proto` con el protocolo original.
+
+Con Dev Tunnels, `check --deploy` puede advertir que Django no fuerza la redirección HTTPS (`security.W008`) y que HSTS no está marcado para precarga (`security.W021`). La redirección y HSTS se aplican en el ingreso de Dev Tunnels; no habilites la precarga para el dominio del túnel.
+
+La clave fija anterior estaba incluida en el historial público del repositorio. Sustitúyela por una clave nueva en el entorno antes de reiniciar el backend; los JWT existentes dejarán de ser válidos y los usuarios deberán iniciar sesión de nuevo. El cambio del archivo no elimina la clave de los commits históricos.
+
+Verifica la configuración antes de iniciar la API:
 
 ```powershell
 python manage.py check
+python manage.py check --deploy
 ```
 
 Inicia la API:
@@ -92,6 +117,8 @@ python manage.py runserver
 ```
 
 La API queda disponible en `http://127.0.0.1:8000/api/`.
+
+`runserver` y Dev Tunnels son herramientas de desarrollo y pruebas, no una plataforma de producción. Para operar el sistema con disponibilidad y soporte de producción, despliega Django detrás de un servidor WSGI/ASGI y un proxy HTTPS administrado. Dev Tunnels está diseñado para compartir servicios durante desarrollo y no se recomienda para cargas de producción.
 
 ## Configuración del frontend
 
@@ -104,6 +131,10 @@ npm run dev
 ```
 
 Abre la URL que indique Vite, normalmente `http://localhost:5173`. El cliente está configurado para consumir la API local en `http://127.0.0.1:8000/api`.
+
+### Demostración desde otro equipo con Dev Tunnels
+
+Para compartir una demostración temporal, inicia Django en el puerto `8000` y Vite en el `5173`, y reenvía ambos puertos con Dev Tunnels. La aplicación remota se abre desde el túnel del frontend; el cliente enviará las llamadas API al túnel del backend. El túnel y ambos procesos deben permanecer activos, y el backend debe poder conectarse a Oracle. Configura los puertos con acceso anónimo solo mientras dure la demostración y no uses credenciales ni datos reales.
 
 Para generar una compilación de producción:
 

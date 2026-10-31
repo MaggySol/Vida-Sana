@@ -25,7 +25,6 @@ function MisReservas() {
 
       setReservas(respuesta.data);
     } catch (error) {
-      console.error("Error al cargar reservas:", error);
 
       if (error.response) {
         setMensaje(
@@ -141,7 +140,6 @@ function MisReservas() {
         setMensaje(respuesta.data.mensaje || "No se pudo cancelar la reserva.");
       }
     } catch (error) {
-      console.error("Error al cancelar reserva:", error);
 
       if (error.response) {
         setMensaje(

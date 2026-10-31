@@ -1,7 +1,14 @@
+import logging
+from types import SimpleNamespace
+
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .oracle.connection import get_connection
+
+logger = logging.getLogger(__name__)
 
 #****************************************
 # Función para registrar un usuario
@@ -16,6 +23,20 @@ def registrar_usuario(
     rol
 ):
     conexion = None
+
+    usuario = SimpleNamespace(
+        username=email,
+        email=email,
+        first_name=nombre,
+        last_name=f"{apellido_paterno} {apellido_materno}",
+    )
+    try:
+        validate_password(contrasenia, user=usuario)
+    except ValidationError as exc:
+        return {
+            "estado": False,
+            "mensaje": " ".join(exc.messages),
+        }
 
     try:
         # Django genera el hash de la contraseña
@@ -51,10 +72,12 @@ def registrar_usuario(
             "mensaje": mensaje
         }
 
-    except Exception as e:
+    except Exception:
+        logger.exception("No se pudo completar el registro de usuario.")
         return {
             "estado": False,
-            "mensaje": str(e)
+            "mensaje": "No se pudo completar el registro. Inténtalo más tarde.",
+            "_error_servidor": True,
         }
 
     finally:
@@ -116,7 +139,7 @@ def autenticar_usuario(email, contrasenia):
         if estado_usuario != "activo":
             return {
                 "estado": False,
-                "mensaje": "El usuario no está activo."
+                "mensaje": "Credenciales incorrectas."
             }
 
         # Crear JWT
@@ -143,10 +166,12 @@ def autenticar_usuario(email, contrasenia):
             }
         }
 
-    except Exception as e:
+    except Exception:
+        logger.exception("No se pudo completar la autenticación de usuario.")
         return {
             "estado": False,
-            "mensaje": f"Error al autenticar usuario: {str(e)}"
+            "mensaje": "No se pudo iniciar sesión. Inténtalo más tarde.",
+            "_error_servidor": True,
         }
 
     finally:

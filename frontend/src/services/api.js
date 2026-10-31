@@ -11,7 +11,7 @@ const getBaseURL = () => {
   }
 
   // Para DevTunnel se usa el túnel del backend
-  return "https://r48tkd13-8000.brs.devtunnels.ms";
+  return "https://r48tkd13-8000.brs.devtunnels.ms/api";
 };
 
 // Crear la instancia de Axios con la URL dinámica
@@ -26,12 +26,8 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
 
-    console.log("PETICIÓN:", config.url);
-    console.log("TOKEN EXISTE:", !!token);
-
     if (token && !config.url.includes("/auth/login/")) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("AUTHORIZATION AGREGADO");
     }
 
     return config;

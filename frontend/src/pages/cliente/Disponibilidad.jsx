@@ -54,7 +54,6 @@ function Disponibilidad() {
         );
       }
     } catch (error) {
-      console.error("Error al consultar disponibilidad:", error);
 
       if (error.response) {
         setMensaje(
@@ -235,8 +234,7 @@ function Disponibilidad() {
           });
 
           setDisponibilidad(disponibilidadActualizada.data);
-        } catch (error) {
-          console.error("Error actualizando disponibilidad:", error);
+        } catch {
         }
       } else {
         setMensaje(respuesta.data.mensaje || "No se pudo realizar la reserva.");
@@ -244,7 +242,6 @@ function Disponibilidad() {
         setConfirmando(false);
       }
     } catch (error) {
-      console.error("Error al crear reserva:", error);
 
       if (error.response) {
         setMensaje(

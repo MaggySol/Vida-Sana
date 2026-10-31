@@ -31,7 +31,6 @@ function GestionCanchas() {
 
       setCanchas(respuesta.data);
     } catch (error) {
-      console.error("Error al cargar canchas:", error);
 
       if (error.response) {
         setError(
@@ -191,7 +190,6 @@ function GestionCanchas() {
         }
       }
     } catch (error) {
-      console.error("Error al guardar cancha:", error);
 
       if (error.response) {
         setError(
@@ -244,7 +242,6 @@ function GestionCanchas() {
         );
       }
     } catch (error) {
-      console.error("Error al deshabilitar cancha:", error);
 
       if (error.response) {
         setError(

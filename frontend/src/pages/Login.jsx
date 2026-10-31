@@ -20,8 +20,6 @@ function Login() {
         contrasenia,
       });
 
-      console.log("Respuesta del servidor:", respuesta.data);
-
       const { access, refresh } = respuesta.data.tokens;
       const usuario = respuesta.data.usuario;
 
@@ -39,8 +37,6 @@ function Login() {
         setMensaje("El usuario tiene un rol no válido.");
       }
     } catch (error) {
-      console.error("Error en login:", error);
-
       if (error.response) {
         setMensaje(error.response.data.mensaje || "Error al iniciar sesión.");
       } else {

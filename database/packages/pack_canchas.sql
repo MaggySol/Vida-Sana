@@ -149,7 +149,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_CANCHAS AS
         WHEN OTHERS THEN
             ROLLBACK;
             V_ESTADO := 'FALSE';
-            V_MENSAJE := 'Se produjo un error inesperado: ' || SQLERRM;
+            V_MENSAJE := 'No se pudo completar la operación. Inténtelo más tarde.';
 
     END INGRESAR_CANCHA;
 
@@ -241,7 +241,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_CANCHAS AS
         WHEN OTHERS THEN
             ROLLBACK;
             V_ESTADO := 'FALSE';
-            V_MENSAJE := 'Error inesperado: ' || SQLERRM;
+            V_MENSAJE := 'No se pudo completar la operación. Inténtelo más tarde.';
 
     END MODIFICAR_CANCHA;
 
@@ -297,7 +297,7 @@ CREATE OR REPLACE PACKAGE BODY PACK_CANCHAS AS
         WHEN OTHERS THEN
             ROLLBACK;
             V_ESTADO := 'FALSE';
-            V_MENSAJE := 'Error inesperado: ' || SQLERRM;
+            V_MENSAJE := 'No se pudo completar la operación. Inténtelo más tarde.';
 
     END ELIMINAR_CANCHA;
 
